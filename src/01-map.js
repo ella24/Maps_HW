@@ -18,6 +18,7 @@ let svg = d3
 let projection = d3.geoMercator()
 let graticule = d3.geoGraticule()
 let path = d3.geoPath().projection(projection)
+let colorScale = d3.scaleSequential(d3.interpolateViridis).clamp(true)
 
 Promise.all([
   d3.json(require('./data/world.topojson')),
@@ -29,15 +30,7 @@ Promise.all([
 function ready([json, datapoints]) {
   let countries = topojson.feature(json, json.objects.countries)
 
-  var xExtent = d3.extent(datapoints, d => +d.x)
-  var yExtent = d3.extent(datapoints, d => +d.y)
-
-  let populationExtent = d3.extent(datapoints, d => d.population)
-
-  var colorScale = d3
-    .scaleSequential(d3.interpolateViridis)
-    .domain()
-    .clamp(true)
+  colorScale.domain([0, 1000000])
 
   svg
     .selectAll('.cities')
@@ -51,15 +44,15 @@ function ready([json, datapoints]) {
       return `translate(${coords})`
     })
     .attr('fill', d => {
-      return colorScale(d.populationExtent)
+      return colorScale(d.population)
     })
 
   svg
-    .selectAll('.countries')
+    .selectAll('.country')
     .data(countries.features)
     .enter()
     .append('path')
-    .attr('class', 'state')
+    .attr('class', 'country')
     .attr('d', path)
     .attr('fill', 'black')
     .attr('stroke', 'black')
@@ -69,5 +62,13 @@ function ready([json, datapoints]) {
     .datum(graticule())
     .attr('d', path)
     .attr('stroke', 'lightgrey')
+    .attr('fill', 'none')
+    .lower()
+
+  svg
+    .append('rect')
+    .attr('width', width)
+    .attr('height', height)
+    .attr('fill', 'black')
     .lower()
 }
